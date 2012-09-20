@@ -1,4 +1,5 @@
 from csv import writer
+import codecs
 from mimetypes import guess_type
 from os.path import join
 from cStringIO import StringIO
@@ -114,14 +115,11 @@ class FormAdmin(admin.ModelAdmin):
                 response = HttpResponse(mimetype="text/csv")
                 fname = "%s-%s.csv" % (form.slug, slugify(now().ctime()))
                 response["Content-Disposition"] = "attachment; filename=%s" % fname
-                queue = StringIO()
-                csv = writer(queue, delimiter=CSV_DELIMITER)
+                response.write(codecs.BOM_UTF8)
+                csv = writer(response, delimiter=CSV_DELIMITER)
                 csv.writerow(entries_form.columns())
                 for row in entries_form.rows(csv=True):
                     csv.writerow(row)
-                # Decode and reencode entire queued response into utf-16 to be Excel compatible
-                data = queue.getvalue().decode("utf-8").encode("utf-16")
-                response.write(data)
                 return response
             elif XLWT_INSTALLED and export_xls:
                 response = HttpResponse(mimetype="application/vnd.ms-excel")
